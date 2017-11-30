@@ -8,7 +8,6 @@ export function parseVersion(str: string): FMIVersion | null {
     return null;
 }
 
-
 export enum FMIVariant {
     CS = "CoSimulation",
     ME = "ModelExchange",
@@ -28,6 +27,7 @@ export enum FMIPlatform {
     Darwin32 = "darwin32",
     Darwin64 = "darwin64",
 }
+
 export function parsePlatform(str: string): FMIPlatform | null {
     switch (str) {
         case "c-code":
@@ -47,9 +47,4 @@ export function parsePlatform(str: string): FMIPlatform | null {
         default:
             return null;
     }
-}
-
-export interface ToolDetails {
-    tool: string;
-    version: string;
 }

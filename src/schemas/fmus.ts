@@ -1,11 +1,12 @@
-import { ToolDetails, FMIVersion, FMIVariant, FMIPlatform } from './fmi';
+import { FMIVersion, FMIVariant, FMIPlatform } from './fmi';
 
 export interface FMUDetails {
     name: string;
     version: FMIVersion;
     variant: FMIVariant;
     platform: FMIPlatform;
-    exporter: ToolDetails;
+    export_tool: string;
+    export_version: string;
 }
 
 export type FMUTable = FMUDetails[];
