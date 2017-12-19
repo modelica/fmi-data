@@ -36,7 +36,7 @@ export interface ToolSummary {
         "slave": VariantSupport,
         "master": VariantSupport,
     },
-    repo: string; // Home repository for this data
+    vendorId: string; // Vendor who "owns" this tool
 }
 
 export type ToolsTable = ToolSummary[];

@@ -1,5 +1,5 @@
 export interface VendorDetails {
-    id: string;
+    vendorId: string;
     displayName: string;
     href: string;
     email: string;
