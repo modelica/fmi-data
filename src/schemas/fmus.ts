@@ -2,6 +2,7 @@ import { FMIVersion, FMIVariant, FMIPlatform } from './fmi';
 
 export interface FMUDetails {
     name: string;
+    vendorId: string;
     version: FMIVersion;
     variant: FMIVariant;
     platform: FMIPlatform;

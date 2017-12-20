@@ -6,6 +6,7 @@ export interface CrossCheckResult {
     version: FMIVersion;
     variant: FMIVariant;
     platform: FMIPlatform;
+    vendorId: string;
     export_tool: string;
     export_version: string;
     import_tool: string;
