@@ -6,7 +6,7 @@ export interface CrossCheckResult {
     version: FMIVersion;
     variant: FMIVariant;
     platform: FMIPlatform;
-    vendorId: string;
+    vendorId: string; // This is the importing vendor (since they are the ones doing the reporting)
     export_tool: string;
     export_version: string;
     import_tool: string;
