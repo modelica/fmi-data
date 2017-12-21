@@ -17,6 +17,6 @@ export interface LegacyToolFile {
         export_me_20: VariantSupportValues;
         slave_cs_20: VariantSupportValues;
         master_cs_20: VariantSupportValues;
-        vendorId: string;
+        vendor: string;
     }
 }
