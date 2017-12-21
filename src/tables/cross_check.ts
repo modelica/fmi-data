@@ -1,7 +1,10 @@
-import { FMIVersion, FMIVariant, FMIPlatform } from './fmi';
+import { FMIVersion, FMIVariant, FMIPlatform } from '../fmi';
 
 export type CrossCheckStatus = "passed" | "rejected" | "failed";
 
+/**
+ * Entry for each cross-check result as a "row" in a "table"
+ */
 export interface CrossCheckResult {
     version: FMIVersion;
     variant: FMIVariant;
@@ -15,4 +18,7 @@ export interface CrossCheckResult {
     status: CrossCheckStatus;
 }
 
+/**
+ * Complete table of cross-check results
+ */
 export type CrossCheckTable = CrossCheckResult[];

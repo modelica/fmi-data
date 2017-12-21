@@ -1,3 +1,8 @@
+/**
+ * The contents of this file represent types specifically in the FMI standard (but
+ * mapped to TypeScript).
+ */
+
 export enum FMIVersion {
     FMI1 = "FMI_1.0",
     FMI2 = "FMI_2.0",

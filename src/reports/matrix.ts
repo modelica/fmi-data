@@ -1,4 +1,4 @@
-import { ToolSummary, CrossCheckResult } from '../schemas';
+import { ToolSummary, CrossCheckResult } from '../tables';
 
 export interface SupportStatus {
     passed: number;

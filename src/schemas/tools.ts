@@ -1,43 +1,30 @@
-export enum Status {
-    Unsupported = "unsupported",
-    Planned = "planned",
-    Available = "available",
+/**
+ * Levels of support: A=Available (but no exports) and P=Planned
+ */
+export type VariantSupportValues = "A" | "P";
+
+/**
+ * Optional indications of support for each variant of FMI
+ * 
+ * @export
+ * @interface VariantSupport
+ */
+export interface VariantSupportFields {
+    export?: VariantSupportValues;
+    import?: VariantSupportValues;
+    slave?: VariantSupportValues;
+    master?: VariantSupportValues;
 }
 
-export interface VariantSupport {
-    status: Status;
-    num: number;
-    // TODO: I don't think this should be here.  This should be
-    // part of a query that performs some kind of reduce operation
-    platforms: {
-        darwin64?: number;
-        linux32?: number;
-        linux64?: number;
-        win32?: number;
-        win64?: number;
-    }
-}
-
-export interface ToolSummary {
-    id: string;
+/**
+ * This applies to <ToolName>.tool files
+ */
+export interface ToolFile {
     displayName: string;
     homepage: string;
-    email: string;
     note: string;
-    fmi1: {
-        "export": VariantSupport,
-        "import": VariantSupport,
-        "slave": VariantSupport,
-        "master": VariantSupport,
-    },
-    fmi2: {
-        "export": VariantSupport,
-        "import": VariantSupport,
-        "slave": VariantSupport,
-        "master": VariantSupport,
-    },
-    vendorId: string; // Vendor who "owns" this tool
+    email: string;
+    vendorId: string;
+    FMI1_0: VariantSupportFields;
+    FMI2_0: VariantSupportFields;
 }
-
-export type ToolsTable = ToolSummary[];
-
