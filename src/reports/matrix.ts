@@ -1,4 +1,5 @@
-import { ToolSummary, CrossCheckResult } from '../tables';
+import { ToolSummary, CrossCheckResult, Status } from '../tables';
+import { FMIVersion, FMIVariant } from '../fmi';
 
 export interface SupportStatus {
     passed: number;
@@ -26,6 +27,7 @@ export interface ColumnReport {
 export interface RowReport {
     id: string;
     name: string;
+    best: Status;
     columns: ColumnReport[];
 }
 
@@ -65,7 +67,7 @@ function nameMap(tools: ToolSummary[]): { [id: string]: string } {
     return ret;
 }
 
-function collectRows(results: CrossCheckResult[], names: { [id: string]: string }, transpose: boolean, toolarg: string | undefined): RowReport[] {
+function collectRows(results: CrossCheckResult[], _tools: ToolSummary[], supporters: SupportMap, names: { [id: string]: string }, transpose: boolean, toolarg: string | undefined): RowReport[] {
     let toolSort = (a: string, b: string) => names[a] > names[b] ? 1 : (names[a] < names[b] ? -1 : 0);
     let toolFilter = (t: string) => !toolarg || t == toolarg;
 
@@ -74,7 +76,13 @@ function collectRows(results: CrossCheckResult[], names: { [id: string]: string 
     let col_tool: "export_tool" | "import_tool" = transpose ? "export_tool" : "import_tool";
     let col_version: "export_version" | "import_version" = transpose ? "export_version" : "import_version";
 
-    let row_tools = valuesOf(row_tool, results).filter(toolFilter);
+    // First, find all tools that have cross check results for either importing or exporting (depending on what we are looking for)
+    let xc_tools = valuesOf(row_tool, results);
+    // Second, find all tools that claim some level of support
+    let supported_tools = Object.keys(supporters).filter((key) => supporters[key] !== Status.Unsupported);
+    // Merge the two sets of tools into a unique list and filter
+    let row_tools = uniq([...xc_tools, ...supported_tools]).filter(toolFilter);
+    // Sort the remaining tools
     row_tools.sort(toolSort);
 
     return row_tools.map((row) => {
@@ -88,6 +96,7 @@ function collectRows(results: CrossCheckResult[], names: { [id: string]: string 
         return {
             id: row,
             name: names[row],
+            best: supporters[row],
             columns: col_tools.map((col) => {
                 let cres = rres.filter((t) => t[col_tool] == col);
                 let col_versions = valuesOf(col_version, cres);
@@ -127,9 +136,67 @@ function uniq<T>(list: T[]): T[] {
     return ret;
 }
 
+export function bestSupport(s1: Status, s2: Status): Status {
+    if (s1 === Status.Unsupported) return s2;
+    if (s2 === Status.Unsupported) return s1;
+    if (s1 === Status.Planned) return s2;
+    if (s2 === Status.Planned) return s1;
+    return s1;
+}
+
+function bestSupportOfQuery(query: MatrixReportQuery, tool: ToolSummary, exp: boolean): Status {
+    if (query.platform !== undefined) return Status.Unsupported;
+    let best = Status.Unsupported;
+    let matches = (s: string, v: string | undefined) => v == undefined || s === v;
+    if (matches(FMIVersion.FMI1, query.version)) {
+        if (matches(FMIVariant.ME, query.variant)) {
+            if (exp) {
+                best = bestSupport(best, tool.fmi1.export);
+            } else {
+                best = bestSupport(best, tool.fmi1.import);
+            }
+        }
+        if (matches(FMIVariant.CS, query.variant)) {
+            if (exp) {
+                best = bestSupport(best, tool.fmi1.slave);
+            } else {
+                best = bestSupport(best, tool.fmi1.master);
+            }
+        }
+    }
+    if (matches(FMIVersion.FMI2, query.version)) {
+        if (matches(FMIVariant.ME, query.variant)) {
+            if (exp) {
+                best = bestSupport(best, tool.fmi2.export);
+            } else {
+                best = bestSupport(best, tool.fmi2.import);
+            }
+        }
+        if (matches(FMIVariant.CS, query.variant)) {
+            if (exp) {
+                best = bestSupport(best, tool.fmi2.slave);
+            } else {
+                best = bestSupport(best, tool.fmi2.master);
+            }
+        }
+    }
+    return best;
+}
+
+export type SupportMap = { [id: string]: Status };
+function supportLevel(query: MatrixReportQuery, tools: ToolSummary[], exports: boolean): SupportMap {
+    let ret: SupportMap = {};
+    for (let i = 0; i < tools.length; i++) {
+        let tool = tools[i];
+        ret[tool.id] = bestSupportOfQuery(query, tool, exports);
+    }
+    return ret;
+}
+
 export async function createMatrixReport(tools: ToolSummary[], docs: CrossCheckResult[], query: MatrixReportQuery): Promise<MatrixReport> {
     let names = await nameMap(tools);
 
+    // Remove all results that don't match our query criteria
     let results = docs.filter((doc) => {
         if (query.version && doc.version != query.version) return false;
         if (query.variant && doc.variant != query.variant) return false;
@@ -137,8 +204,15 @@ export async function createMatrixReport(tools: ToolSummary[], docs: CrossCheckR
         return true;
     });
 
-    let exporters = collectRows(results, names, false, query.tool);
-    let importers = collectRows(results, names, true, query.tool);
+    // Collect all tools that claim to support export under this query filter
+    let exportSupport = supportLevel(query, tools, true);
+    // Collect results using export tool as the row and import tool as the column
+    let exporters = collectRows(results, tools, exportSupport, names, false, query.tool);
+
+    // Collect all tools that claim to support import under this query filter
+    let importSupport = supportLevel(query, tools, true);
+    // Collect results using import tool as the row and export tool as the column
+    let importers = collectRows(results, tools, importSupport, names, true, query.tool);
 
     let all = [...exporters, ...importers];
     // Sort by **name**
@@ -147,7 +221,7 @@ export async function createMatrixReport(tools: ToolSummary[], docs: CrossCheckR
     let toolsIds = uniq(all.map((x) => x.id));
 
     return {
-        tools: toolsIds,
+        tools: toolsIds, // TODO: Use tool summaries?
         exporters: exporters,
         importers: importers,
     }
