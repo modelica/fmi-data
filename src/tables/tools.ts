@@ -4,6 +4,13 @@ export enum Status {
     Available = "available",
 }
 
+export interface VariantStatus {
+    export: Status;
+    import: Status;
+    slave: Status;
+    master: Status;
+}
+
 export interface ToolSummary {
     id: string;
     vendorId: string; // Vendor who "owns" this tool
@@ -11,18 +18,8 @@ export interface ToolSummary {
     homepage: string;
     email: string;
     note: string;
-    fmi1: {
-        "export": Status,
-        "import": Status,
-        "slave": Status,
-        "master": Status,
-    },
-    fmi2: {
-        "export": Status,
-        "import": Status,
-        "slave": Status,
-        "master": Status,
-    },
+    fmi1: VariantStatus,
+    fmi2: VariantStatus,
 }
 
 export type ToolsTable = ToolSummary[];
