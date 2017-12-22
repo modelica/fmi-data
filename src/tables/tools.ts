@@ -4,39 +4,25 @@ export enum Status {
     Available = "available",
 }
 
-export interface VariantSupport {
-    status: Status;
-    num: number;
-    // TODO: I don't think this should be here.  This should be
-    // part of a query that performs some kind of reduce operation
-    platforms: {
-        darwin64?: number;
-        linux32?: number;
-        linux64?: number;
-        win32?: number;
-        win64?: number;
-    }
-}
-
 export interface ToolSummary {
     id: string;
+    vendorId: string; // Vendor who "owns" this tool
     displayName: string;
     homepage: string;
     email: string;
     note: string;
     fmi1: {
-        "export": VariantSupport,
-        "import": VariantSupport,
-        "slave": VariantSupport,
-        "master": VariantSupport,
+        "export": Status,
+        "import": Status,
+        "slave": Status,
+        "master": Status,
     },
     fmi2: {
-        "export": VariantSupport,
-        "import": VariantSupport,
-        "slave": VariantSupport,
-        "master": VariantSupport,
+        "export": Status,
+        "import": Status,
+        "slave": Status,
+        "master": Status,
     },
-    vendorId: string; // Vendor who "owns" this tool
 }
 
 export type ToolsTable = ToolSummary[];
