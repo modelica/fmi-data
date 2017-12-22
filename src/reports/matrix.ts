@@ -141,6 +141,18 @@ export function bestSupport(s1: Status, s2: Status): Status {
     if (s2 === Status.Unsupported) return s1;
     if (s1 === Status.Planned) return s2;
     if (s2 === Status.Planned) return s1;
+    if (s1 === Status.Available) return s2;
+    if (s2 === Status.Available) return s1;
+    return s1;
+}
+
+export function worstSupport(s1: Status, s2: Status): Status {
+    if (s1 === Status.CrossChecked) return s2;
+    if (s2 === Status.CrossChecked) return s1;
+    if (s1 === Status.Available) return s2;
+    if (s2 === Status.Available) return s1;
+    if (s1 === Status.Planned) return s2;
+    if (s2 === Status.Planned) return s1;
     return s1;
 }
 

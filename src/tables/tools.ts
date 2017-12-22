@@ -2,6 +2,7 @@ export enum Status {
     Unsupported = "unsupported",
     Planned = "planned",
     Available = "available",
+    CrossChecked = "crosschecked",
 }
 
 export interface VariantStatus {
