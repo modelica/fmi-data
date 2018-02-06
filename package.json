@@ -1,20 +1,25 @@
 {
-  "name": "@modelica/fmi-data",
-  "version": "0.11.3",
-  "description": "Code and associated type definitions for FMI related data",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
-  "scripts": {
-    "prepublish": "tsc",
-    "compile": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [
-    "FMI"
-  ],
-  "author": "Michael M. Tiller",
-  "license": "MIT",
-  "dependencies": {
-    "typescript": "^2.6.2"
-  }
+    "name": "@modelica/fmi-data",
+    "version": "0.11.3",
+    "description": "Code and associated type definitions for FMI related data",
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
+    "scripts": {
+        "prepublish": "tsc",
+        "compile": "tsc",
+        "test": "jest"
+    },
+    "keywords": [
+        "FMI"
+    ],
+    "author": "Michael M. Tiller",
+    "license": "MIT",
+    "dependencies": {},
+    "devDependencies": {
+        "@types/jest": "^22.1.1",
+        "@types/node": "^9.4.0",
+        "jest": "^22.1.4",
+        "ts-jest": "^22.0.3",
+        "typescript": "^2.6.2"
+    }
 }
