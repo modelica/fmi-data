@@ -5,8 +5,8 @@
     "main": "lib/src/index.js",
     "types": "lib/src/index.d.ts",
     "scripts": {
-        "prepublish": "tsc",
-        "compile": "tsc",
+        "prepublish": "npm run compile",
+        "compile": "tsc && cp -r __tests__/sample_data lib/src",
         "test": "jest"
     },
     "keywords": ["FMI"],
