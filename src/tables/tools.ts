@@ -2,7 +2,10 @@ export enum Status {
     Unsupported = "unsupported",
     Planned = "planned",
     Available = "available",
-    CrossChecked = "crosschecked",
+    // No higher levels of support are included here because
+    //   a) This is largely a normalization of the ToolInfo data from the vendor
+    //   b) The tool doesn't get to decide if it is cross-checked
+    //   c) The cross check results and some logic are required to determine this
 }
 
 export interface VariantStatus {
@@ -19,9 +22,8 @@ export interface ToolSummary {
     homepage: string;
     email: string;
     note: string;
-    fmi1: VariantStatus,
-    fmi2: VariantStatus,
+    fmi1: VariantStatus;
+    fmi2: VariantStatus;
 }
 
 export type ToolsTable = ToolSummary[];
-

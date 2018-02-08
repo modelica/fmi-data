@@ -31,14 +31,13 @@ export interface ColumnReport {
 export interface RowReport {
     id: string;
     name: string;
-    best: Status;
     columns: ColumnReport[];
 }
 
 export interface MatrixReport {
     tools: string[];
-    exporters: RowReport[];
-    importers: RowReport[];
+    exportsTo: RowReport[]; // Each column will be a tool that imports FMUs produced by the tool associated with this row
+    importsFrom: RowReport[]; // Each column will be a tool that exports an FMU that is imported by the tool associated with this row
 }
 
 function tallySummary(results: CrossCheckResult[]): SupportStatus {
@@ -76,7 +75,6 @@ function nameMap(tools: ToolSummary[]): { [id: string]: string } {
 function collectRows(
     results: CrossCheckResult[],
     _tools: ToolSummary[],
-    supporters: SupportMap,
     names: { [id: string]: string },
     transpose: boolean,
     toolarg: string | undefined,
@@ -91,10 +89,8 @@ function collectRows(
 
     // First, find all tools that have cross check results for either importing or exporting (depending on what we are looking for)
     let xc_tools = valuesOf(row_tool, results);
-    // Second, find all tools that claim some level of support
-    let supported_tools = Object.keys(supporters).filter(key => supporters[key] !== Status.Unsupported);
     // Merge the two sets of tools into a unique list and filter
-    let row_tools = uniq([...xc_tools, ...supported_tools]).filter(toolFilter);
+    let row_tools = uniq([...xc_tools]).filter(toolFilter);
     // Sort the remaining tools
     row_tools.sort(toolSort);
 
@@ -132,7 +128,6 @@ function collectRows(
         return {
             id: row,
             name: names[row],
-            best: supporters[row],
             columns: columns,
         };
     });
@@ -156,75 +151,6 @@ function uniq<T>(list: T[]): T[] {
     return ret;
 }
 
-export function bestSupport(s1: Status, s2: Status): Status {
-    if (s1 === Status.Unsupported) return s2;
-    if (s2 === Status.Unsupported) return s1;
-    if (s1 === Status.Planned) return s2;
-    if (s2 === Status.Planned) return s1;
-    if (s1 === Status.Available) return s2;
-    if (s2 === Status.Available) return s1;
-    return s1;
-}
-
-export function worstSupport(s1: Status, s2: Status): Status {
-    if (s1 === Status.CrossChecked) return s2;
-    if (s2 === Status.CrossChecked) return s1;
-    if (s1 === Status.Available) return s2;
-    if (s2 === Status.Available) return s1;
-    if (s1 === Status.Planned) return s2;
-    if (s2 === Status.Planned) return s1;
-    return s1;
-}
-
-function bestSupportOfQuery(query: MatrixReportQuery, tool: ToolSummary, exp: boolean): Status {
-    if (query.platform !== undefined) return Status.Unsupported;
-    let best = Status.Unsupported;
-    let matches = (s: string, v: string | undefined) => v == undefined || s === v;
-    if (matches(FMIVersion.FMI1, query.version)) {
-        if (matches(FMIVariant.ME, query.variant)) {
-            if (exp) {
-                best = bestSupport(best, tool.fmi1.export);
-            } else {
-                best = bestSupport(best, tool.fmi1.import);
-            }
-        }
-        if (matches(FMIVariant.CS, query.variant)) {
-            if (exp) {
-                best = bestSupport(best, tool.fmi1.slave);
-            } else {
-                best = bestSupport(best, tool.fmi1.master);
-            }
-        }
-    }
-    if (matches(FMIVersion.FMI2, query.version)) {
-        if (matches(FMIVariant.ME, query.variant)) {
-            if (exp) {
-                best = bestSupport(best, tool.fmi2.export);
-            } else {
-                best = bestSupport(best, tool.fmi2.import);
-            }
-        }
-        if (matches(FMIVariant.CS, query.variant)) {
-            if (exp) {
-                best = bestSupport(best, tool.fmi2.slave);
-            } else {
-                best = bestSupport(best, tool.fmi2.master);
-            }
-        }
-    }
-    return best;
-}
-
-export type SupportMap = { [id: string]: Status };
-function supportLevel(query: MatrixReportQuery, tools: ToolSummary[], exports: boolean): SupportMap {
-    let ret: SupportMap = {};
-    for (let i = 0; i < tools.length; i++) {
-        let tool = tools[i];
-        ret[tool.id] = bestSupportOfQuery(query, tool, exports);
-    }
-    return ret;
-}
-
 export async function createMatrixReport(
     tools: ToolSummary[],
     docs: CrossCheckResult[],
@@ -240,17 +166,13 @@ export async function createMatrixReport(
         return true;
     });
 
-    // Collect all tools that claim to support export under this query filter
-    let exportSupport = supportLevel(query, tools, true);
     // Collect results using export tool as the row and import tool as the column
-    let exporters = collectRows(results, tools, exportSupport, names, false, query.tool);
+    let exportsTo = collectRows(results, tools, names, false, query.tool);
 
-    // Collect all tools that claim to support import under this query filter
-    let importSupport = supportLevel(query, tools, true);
     // Collect results using import tool as the row and export tool as the column
-    let importers = collectRows(results, tools, importSupport, names, true, query.tool);
+    let importsFrom = collectRows(results, tools, names, true, query.tool);
 
-    let all = [...exporters, ...importers];
+    let all = [...exportsTo, ...importsFrom];
     // Sort by **name**
     all.sort((a, b) => (a.name > b.name ? 1 : a.name < b.name ? -1 : 0));
     // Extract **ids**
@@ -258,7 +180,7 @@ export async function createMatrixReport(
 
     return {
         tools: toolsIds, // TODO: Use tool summaries?
-        exporters: exporters,
-        importers: importers,
+        exportsTo: exportsTo,
+        importsFrom: importsFrom,
     };
 }

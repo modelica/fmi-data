@@ -1,9 +1,9 @@
-import { createMatrixReport, MatrixReport, Status } from "../src";
+import { createMatrixReport, MatrixReport } from "../src";
 var tools = require("./sample_data/tools");
 var xc_results = require("./sample_data/xc_results");
 
-const knownExporters: { [key: string]: { expby: string[]; impby: string[] } } = {
-    "20sim": { impby: ["FMPy", "COE", "dSPACE_VEOS"], expby: [] },
+const knownExporters: { [key: string]: { expto: string[]; impby: string[] } } = {
+    "20sim": { impby: ["FMPy", "COE", "dSPACE_VEOS"], expto: [] },
 };
 
 describe("Report related tests", () => {
@@ -17,25 +17,24 @@ describe("Report related tests", () => {
     Object.keys(knownExporters).forEach(tool => {
         test("Ensure " + tool + " is marked as an exporter", () => {
             let impby = knownExporters[tool].impby;
-            let expby = knownExporters[tool].expby;
+            let expto = knownExporters[tool].expto;
 
             if (impby.length > 0) {
-                let exportRows = report.exporters.find(row => row.id === tool);
-                expect(exportRows).toBeDefined();
-                console.log(JSON.stringify(exportRows));
-                if (exportRows) {
-                    expect(exportRows.best).toEqual(Status.CrossChecked);
-                    let importers = exportRows.columns.map(col => col.id);
+                let exportedTo = report.exportsTo.find(row => row.id === tool);
+                expect(exportedTo).toBeDefined();
+                console.log(JSON.stringify(exportedTo));
+                if (exportedTo) {
+                    let importers = exportedTo.columns.map(col => col.id);
                     expect(importers).toEqual(impby);
                 }
+            }
 
-                if (expby.length > 0) {
-                    let importRows = report.importers.find(row => row.id === tools);
-                    expect(importRows).toBeDefined();
-                    if (importRows) {
-                        let exporters = importRows.columns.map(col => col.id);
-                        expect(exporters).toEqual(knownExporters[tool].expby);
-                    }
+            if (expto.length > 0) {
+                let importRows = report.importsFrom.find(row => row.id === tools);
+                expect(importRows).toBeDefined();
+                if (importRows) {
+                    let exporters = importRows.columns.map(col => col.id);
+                    expect(exporters).toEqual(knownExporters[tool].expto);
                 }
             }
         });
