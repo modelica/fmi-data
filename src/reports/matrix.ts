@@ -1,5 +1,9 @@
-import { ToolSummary, CrossCheckResult, Status } from '../tables';
-import { FMIVersion, FMIVariant } from '../fmi';
+import { ToolSummary, CrossCheckResult, Status } from "../tables";
+import { FMIVersion, FMIVariant } from "../fmi";
+
+import * as debug from "debug";
+const debugReport = debug("fmi-data:report");
+debugReport.enabled = false;
 
 export interface SupportStatus {
     passed: number;
@@ -35,40 +39,49 @@ export interface MatrixReport {
     tools: string[];
     exporters: RowReport[];
     importers: RowReport[];
-};
+}
 
 function tallySummary(results: CrossCheckResult[]): SupportStatus {
     let passed = 0;
     let failed = 0;
     let rejected = 0;
-    results.forEach((r) => {
+    results.forEach(r => {
         if (r.status == "passed") passed++;
         if (r.status == "failed") failed++;
         if (r.status == "rejected") rejected++;
-    })
+    });
     return {
         passed: passed,
         failed: failed,
         rejected: rejected,
-    }
+    };
 }
 
 function valuesOf<T, K extends keyof T>(attr: K, data: T[]): T[K][] {
     let ret = new Set<T[K]>();
-    data.forEach((d) => { ret.add(d[attr]) });
+    data.forEach(d => {
+        ret.add(d[attr]);
+    });
     return Array.from(ret);
 }
 
 function nameMap(tools: ToolSummary[]): { [id: string]: string } {
     let ret: { [id: string]: string } = {};
-    tools.forEach((tool) => {
+    tools.forEach(tool => {
         ret[tool.id] = tool.displayName;
-    })
+    });
     return ret;
 }
 
-function collectRows(results: CrossCheckResult[], _tools: ToolSummary[], supporters: SupportMap, names: { [id: string]: string }, transpose: boolean, toolarg: string | undefined): RowReport[] {
-    let toolSort = (a: string, b: string) => names[a] > names[b] ? 1 : (names[a] < names[b] ? -1 : 0);
+function collectRows(
+    results: CrossCheckResult[],
+    _tools: ToolSummary[],
+    supporters: SupportMap,
+    names: { [id: string]: string },
+    transpose: boolean,
+    toolarg: string | undefined,
+): RowReport[] {
+    let toolSort = (a: string, b: string) => (names[a] > names[b] ? 1 : names[a] < names[b] ? -1 : 0);
     let toolFilter = (t: string) => !toolarg || t == toolarg;
 
     let row_tool: "import_tool" | "export_tool" = transpose ? "import_tool" : "export_tool";
@@ -79,42 +92,49 @@ function collectRows(results: CrossCheckResult[], _tools: ToolSummary[], support
     // First, find all tools that have cross check results for either importing or exporting (depending on what we are looking for)
     let xc_tools = valuesOf(row_tool, results);
     // Second, find all tools that claim some level of support
-    let supported_tools = Object.keys(supporters).filter((key) => supporters[key] !== Status.Unsupported);
+    let supported_tools = Object.keys(supporters).filter(key => supporters[key] !== Status.Unsupported);
     // Merge the two sets of tools into a unique list and filter
     let row_tools = uniq([...xc_tools, ...supported_tools]).filter(toolFilter);
     // Sort the remaining tools
     row_tools.sort(toolSort);
 
-    return row_tools.map((row) => {
-        let rres = results.filter((t) => t[row_tool] == row)
+    return row_tools.map(row => {
+        debugReport.enabled = row == "20sim";
+        debugReport("Processing %j as %s", row, row_tool);
+        let rres = results.filter(t => t[row_tool] == row);
+        debugReport("  %d cross-check results for this tool", rres.length);
         let row_versions = valuesOf(row_version, rres);
-        row_versions.sort((a: string, b: string) => a > b ? 1 : (a < b ? -1 : 0));
+        row_versions.sort((a: string, b: string) => (a > b ? 1 : a < b ? -1 : 0));
 
         let col_tools = valuesOf(col_tool, rres);
         col_tools.sort(toolSort);
+        debugReport("  %ss: %j", col_tool, col_tools);
 
+        let columns = col_tools.map(col => {
+            let cres = rres.filter(t => t[col_tool] == col);
+            debugReport("    %d cross-check results that also have %s as %s", cres.length, col, col_tool);
+            let col_versions = valuesOf(col_version, cres);
+            col_versions.sort((a: string, b: string) => (a > b ? 1 : a < b ? -1 : 0));
+            return {
+                id: col,
+                name: names[col],
+                summary: tallySummary(cres),
+                rows: row_versions.map(rowv => ({
+                    version: rowv,
+                    cols: col_versions.map(colv => ({
+                        version: colv,
+                        status: tallySummary(cres.filter(r => r[row_version] == rowv && r[col_version] == colv)),
+                    })),
+                })),
+            };
+        });
+        debugReport("    columns: %j", columns);
         return {
             id: row,
             name: names[row],
             best: supporters[row],
-            columns: col_tools.map((col) => {
-                let cres = rres.filter((t) => t[col_tool] == col);
-                let col_versions = valuesOf(col_version, cres);
-                col_versions.sort((a: string, b: string) => a > b ? 1 : (a < b ? -1 : 0));
-                return {
-                    id: col,
-                    name: names[col],
-                    summary: tallySummary(cres),
-                    rows: row_versions.map((rowv) => ({
-                        version: rowv,
-                        cols: col_versions.map((colv) => ({
-                            version: colv,
-                            status: tallySummary(cres.filter((r) => r[row_version] == rowv && r[col_version] == colv)),
-                        }))
-                    }))
-                }
-            })
-        }
+            columns: columns,
+        };
     });
 }
 
@@ -205,11 +225,15 @@ function supportLevel(query: MatrixReportQuery, tools: ToolSummary[], exports: b
     return ret;
 }
 
-export async function createMatrixReport(tools: ToolSummary[], docs: CrossCheckResult[], query: MatrixReportQuery): Promise<MatrixReport> {
+export async function createMatrixReport(
+    tools: ToolSummary[],
+    docs: CrossCheckResult[],
+    query: MatrixReportQuery,
+): Promise<MatrixReport> {
     let names = await nameMap(tools);
 
     // Remove all results that don't match our query criteria
-    let results = docs.filter((doc) => {
+    let results = docs.filter(doc => {
         if (query.version && doc.version != query.version) return false;
         if (query.variant && doc.variant != query.variant) return false;
         if (query.platform && doc.platform != query.platform) return false;
@@ -228,13 +252,13 @@ export async function createMatrixReport(tools: ToolSummary[], docs: CrossCheckR
 
     let all = [...exporters, ...importers];
     // Sort by **name**
-    all.sort((a, b) => a.name > b.name ? 1 : (a.name < b.name) ? -1 : 0);
+    all.sort((a, b) => (a.name > b.name ? 1 : a.name < b.name ? -1 : 0));
     // Extract **ids**
-    let toolsIds = uniq(all.map((x) => x.id));
+    let toolsIds = uniq(all.map(x => x.id));
 
     return {
         tools: toolsIds, // TODO: Use tool summaries?
         exporters: exporters,
         importers: importers,
-    }
+    };
 }
