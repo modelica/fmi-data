@@ -1,5 +1,4 @@
-import { ToolSummary, CrossCheckResult, Status } from "../tables";
-import { FMIVersion, FMIVariant } from "../fmi";
+import { ToolSummary, CrossCheckResult } from "../tables";
 
 import * as debug from "debug";
 const debugReport = debug("fmi-data:report");
