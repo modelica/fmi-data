@@ -2,7 +2,7 @@ import { ToolSummary, CrossCheckResult } from "../tables";
 
 import * as debug from "debug";
 const debugReport = debug("fmi-data:report");
-debugReport.enabled = false;
+//debugReport.enabled = false;
 
 export interface SupportStatus {
     passed: number;
@@ -94,7 +94,6 @@ function collectRows(
     row_tools.sort(toolSort);
 
     return row_tools.map(row => {
-        debugReport.enabled = row == "20sim";
         debugReport("Processing %j as %s", row, row_tool);
         let rres = results.filter(t => t[row_tool] == row);
         debugReport("  %d cross-check results for this tool", rres.length);
