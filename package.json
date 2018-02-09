@@ -1,6 +1,6 @@
 {
     "name": "@modelica/fmi-data",
-    "version": "0.12.1",
+    "version": "0.12.2",
     "description": "Code and associated type definitions for FMI related data",
     "main": "lib/src/index.js",
     "types": "lib/src/index.d.ts",
@@ -9,7 +9,9 @@
         "compile": "tsc && cp -r __tests__/sample_data lib/src",
         "test": "jest"
     },
-    "keywords": ["FMI"],
+    "keywords": [
+        "FMI"
+    ],
     "author": "Michael M. Tiller",
     "license": "MIT",
     "dependencies": {
