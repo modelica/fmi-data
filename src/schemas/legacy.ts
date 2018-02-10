@@ -1,4 +1,4 @@
-import { VariantSupportValues } from './tools';
+import { VariantSupportValues } from "./tools";
 
 /**
  * This applies to older <ToolName>.info
@@ -6,8 +6,8 @@ import { VariantSupportValues } from './tools';
 export interface LegacyToolFile {
     Tool: {
         name: string;
-        href: string;
-        email: string;
+        href: string | null;
+        email: string | null;
         note: string;
         import_me: VariantSupportValues;
         export_me: VariantSupportValues;
@@ -18,5 +18,5 @@ export interface LegacyToolFile {
         slave_cs_20: VariantSupportValues;
         master_cs_20: VariantSupportValues;
         vendor: string;
-    }
+    };
 }
