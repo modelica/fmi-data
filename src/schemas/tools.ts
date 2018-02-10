@@ -5,7 +5,7 @@ export type VariantSupportValues = "A" | "P";
 
 /**
  * Optional indications of support for each variant of FMI
- * 
+ *
  * @export
  * @interface VariantSupport
  */
@@ -24,7 +24,6 @@ export interface ToolFile {
     homepage: string;
     note: string;
     email: string;
-    vendorId: string;
     FMI1_0: VariantSupportFields;
     FMI2_0: VariantSupportFields;
 }
