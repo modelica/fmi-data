@@ -1,9 +1,5 @@
 import { ToolSummary, CrossCheckResult } from "../tables";
 
-import * as debug from "debug";
-const debugReport = debug("fmi-data:report");
-//debugReport.enabled = false;
-
 export interface SupportStatus {
     passed: number;
     rejected: number;
@@ -94,19 +90,15 @@ function collectRows(
     row_tools.sort(toolSort);
 
     return row_tools.map(row => {
-        debugReport("Processing %j as %s", row, row_tool);
         let rres = results.filter(t => t[row_tool] == row);
-        debugReport("  %d cross-check results for this tool", rres.length);
         let row_versions = valuesOf(row_version, rres);
         row_versions.sort((a: string, b: string) => (a > b ? 1 : a < b ? -1 : 0));
 
         let col_tools = valuesOf(col_tool, rres);
         col_tools.sort(toolSort);
-        debugReport("  %ss: %j", col_tool, col_tools);
 
         let columns = col_tools.map(col => {
             let cres = rres.filter(t => t[col_tool] == col);
-            debugReport("    %d cross-check results that also have %s as %s", cres.length, col, col_tool);
             let col_versions = valuesOf(col_version, cres);
             col_versions.sort((a: string, b: string) => (a > b ? 1 : a < b ? -1 : 0));
             return {
@@ -122,7 +114,6 @@ function collectRows(
                 })),
             };
         });
-        debugReport("    columns: %j", columns);
         return {
             id: row,
             name: names[row],
