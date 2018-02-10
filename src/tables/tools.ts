@@ -1,3 +1,5 @@
+import { VendorDetails } from "../schemas";
+
 export enum Status {
     Unsupported = "unsupported",
     Planned = "planned",
@@ -17,7 +19,7 @@ export interface VariantStatus {
 
 export interface ToolSummary {
     id: string;
-    vendorId: string; // Vendor who "owns" this tool
+    vendor: VendorDetails;
     displayName: string;
     homepage: string;
     email: string;

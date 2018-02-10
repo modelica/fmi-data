@@ -168,7 +168,7 @@ export async function createMatrixReport(
     let toolsIds = uniq(all.map(x => x.id));
 
     return {
-        tools: toolsIds, // TODO: Use tool summaries?
+        tools: toolsIds,
         exportsTo: exportsTo,
         importsFrom: importsFrom,
     };
