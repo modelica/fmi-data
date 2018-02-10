@@ -21,9 +21,9 @@ export interface VariantSupportFields {
  */
 export interface ToolFile {
     displayName: string;
-    homepage: string;
+    homepage: string | null;
     note: string;
-    email: string;
+    email: string | null;
     FMI1_0: VariantSupportFields;
     FMI2_0: VariantSupportFields;
 }
