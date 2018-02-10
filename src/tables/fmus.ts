@@ -1,11 +1,11 @@
-import { FMIVersion, FMIVariant, FMIPlatform } from '../fmi';
+import { FMIVersion, FMIVariant, FMIPlatform } from "../fmi";
 
 /**
  * Entry for each exported FMU as a "row" in a "table"
  */
 export interface FMUDetails {
     name: string;
-    vendorId: string;
+    vendorId: string; // This is here so we know what to remove when merging a vendor repo
     version: FMIVersion;
     variant: FMIVariant;
     platform: FMIPlatform;

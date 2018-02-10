@@ -21,8 +21,8 @@ export interface ToolSummary {
     id: string;
     vendor: VendorDetails;
     displayName: string;
-    homepage: string;
-    email: string;
+    homepage: string | null;
+    email: string | null;
     note: string;
     fmi1: VariantStatus;
     fmi2: VariantStatus;
